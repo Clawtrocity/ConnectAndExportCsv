@@ -38,9 +38,9 @@ namespace DocuWare
                 if (document["STATUS"].Item.ToString() == "Ready")
                 {
                     myExport.AddRow();
-                    myExport["DWDOCID"] = document["DWDOCID"];
-                    myExport["FIRST_NAME"] = document["FIRST_NAME"];
-                    myExport["LAST_NAME"] = document["LAST_NAME"];
+                    myExport["DWDOCID"] = document["DWDOCID"].ToString().Replace("DWDOCID (Int):", "");
+                    myExport["FIRST_NAME"] = document["FIRST_NAME"].ToString().Replace("FIRST_NAME (String):", "");
+                    myExport["LAST_NAME"] = document["LAST_NAME"].ToString().Replace("LAST_NAME (String):", "");
                     Update(document);
                 }
             }
