@@ -1,17 +1,19 @@
 ﻿using System;
+using ConnectAndExportCsv.Properties;
 using DocuWare.Platform.ServerClient;
 using Jitbit.Utils;
 using System.Collections.Generic;
 
 namespace DocuWare
 {
-    public static class ConnectAndExport
+    public class ConnectAndExport
     {
+
         public static Uri uri = new Uri("https://docuware-online.com:443/DocuWare/Platform");
 
         public static ServiceConnection ConnectWithOrg()
         {
-            return ServiceConnection.Create(uri, "DWAdmin", "Tosh1ba!", organization: "SmartMFP-TBSNE-54");
+            return ServiceConnection.Create(uri, Settings.Default.initial.ToString(), Settings.Default.entry.ToString(), organization: Settings.Default.org.ToString());
         }
 
         public static DocumentIndexFields Update(Document document)
@@ -23,7 +25,6 @@ namespace DocuWare
                     DocumentIndexField.Create("STATUS", "Exported"),
                 }
             };
-
             return document.PutToFieldsRelationForDocumentIndexFields(fields);
         }
 
@@ -35,24 +36,37 @@ namespace DocuWare
                 count: count).Result;
             foreach (var document in queryResult.Items)
             {
-                if (document["STATUS"].Item.ToString() == "Ready")
+                if (document["STATUS"].Item.ToString() == "Processed")
                 {
                     myExport.AddRow();
-                    myExport["DWDOCID"] = document["DWDOCID"].ToString().Replace("DWDOCID (Int):", "");
-                    myExport["FIRST_NAME"] = document["FIRST_NAME"].ToString().Replace("FIRST_NAME (String):", "");
-                    myExport["LAST_NAME"] = document["LAST_NAME"].ToString().Replace("LAST_NAME (String):", "");
+                    myExport["Type"] = document["DOCUMENT_TYPE"].ToString().Replace("DOCUMENT_TYPE (String): ","");
+                    myExport["DWDOCID"] = document["DWDOCID"].ToString().Replace("DWDOCID (Int): ", "");
+                    myExport["Invoice Date"] = document["INVOICE_DATE"].ToString().Replace("INVOICE_DATE (String): ", "").Replace("0:00","");
+                    myExport["Post Period"] = "";
+                    myExport["VendorID"] = document["VENDOR_ID"].ToString().Replace("VENDOR_ID (String): ", "");
+                    myExport["VendorRef"] = "";
+                    myExport["Location"] = "";
+                    myExport["Terms"] = "";
+                    myExport["Due Date"] = "";
+                    myExport["Invoice Description"] = "";
+                    myExport["Originating Branch"] = document["COMPANY"].ToString().Replace("COMPANY (String): ", "");
+                    myExport["LineNbr"] = document["LINE_NUMBER"].ToString().Replace("LINE_NUMBER (String): ", "").Replace("LINE_NUMBER (Date): ", "");
+                    myExport["Ext Cost"] = document["AMOUNT"].ToString().Replace("AMOUNT (String): ", "");
+                    myExport["Account"] = document["GL_CODE"].ToString().Replace("GL_CODE (String): ", "").Replace("GL_CODE (Date): ", "");
+                    myExport["Subaccount"] = document["GL_SUBCODE"].ToString().Replace("GL_SUBCODE (String): ", "").Replace("GL_SUBCODE (Date): null", "");
+                    myExport["Destination Branch"] = document["COMPANY"].ToString().Replace("COMPANY (String): ", "");
+                    myExport["Line Description"] = "";
                     Update(document);
                 }
             }
-            myExport.ExportToFile(string.Format("C:\\Docuware Project\\Import-{0:yyyy-MM-dd_hh-mm-ss-tt}.csv", DateTime.Now));
-            //myExport.ExportToFile("C:\\Docuware Project\\Import.csv");
+            myExport.ExportToFile(string.Format(Settings.Default.exportpath, DateTime.Now));
 
             return queryResult;
         }
 
         public static void Main()
         {
-            ListAllDocuments(ConnectWithOrg(), "21d44bf7-7c1a-4620-baa2-a1f21d27bbd4");
+            ListAllDocuments(ConnectWithOrg(), Settings.Default.fcguid);
             Console.WriteLine("Hit ENTER to exit...");
             Console.ReadLine();
         }
